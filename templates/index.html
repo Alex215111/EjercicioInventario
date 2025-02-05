@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventario de Planchas</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/css/bootstrap.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        body {
+            background-color: #eaeaea;
+            font-family: "Roboto", sans-serif;
+        }
+        .navbar {
+            background-color: #004c97;
+        }
+        .navbar-brand {
+            font-weight: bold;
+            color: #fff;
+            display: flex;
+            align-items: center;
+        }
+        .navbar-brand img {
+            margin-right: 10px;
+        }
+        .navbar-brand span {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+        .navbar-brand:hover {
+            color: #f8f9fa;
+        }
+        .card {
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            border: none;
+        }
+        .btn-primary, .btn-warning, .btn-danger, .btn-info, .btn-secondary {
+            font-size: 1.1rem;
+            font-weight: 500;
+        }
+        h1 {
+            color: #004c97;
+            font-weight: 700;
+        }
+        footer {
+            background-color: #004c97;
+            color: #fff;
+            text-align: center;
+            padding: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">
+                <img src="/static/logo.png" alt="Logo" height="40">
+                <span>Sistema de Control de Acrílicos</span>
+            </a>
+        </div>
+    </nav>
+
+    <div class="container mt-5">
+        <h1 class="text-center mb-4">Gestión de Inventario</h1>
+
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <button class="btn btn-primary w-100" onclick="mostrarFormulario('agregar')">Agregar Plancha</button>
+            </div>
+            <div class="col-md-3">
+                <button class="btn btn-warning w-100" onclick="mostrarFormulario('actualizarStock')">Actualizar Stock</button>
+            </div>
+            <div class="col-md-3">
+                <button class="btn btn-danger w-100" onclick="mostrarFormulario('quitar')">Quitar Stock</button>
+            </div>
+            <div class="col-md-3">
+                <button class="btn btn-info w-100" onclick="mostrarFormulario('editar')">Editar Datos</button>
+            </div>
+        </div>
+
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <button class="btn btn-secondary w-100" onclick="cargarInventario()">Mostrar Inventario</button>
+            </div>
+        </div>
+
+        <div id="formulario"></div>
+        <div id="resultado" class="mt-4"></div>
+    </div>
+
+    <footer>
+        <p>&copy; 2025 Alexander Tardón. Todos los derechos reservados.</p>
+    </footer>
+
+    <script>
+        function mostrarFormulario(tipo) {
+            let formularioHTML = '';
+
+            if (tipo === 'agregar') {
+                formularioHTML = `
+                    <div class="card p-4">
+                        <h5>Agregar Plancha</h5>
+                        <div class="mb-3">
+                            <label for="tipo" class="form-label">Tipo de Plancha</label>
+                            <input type="text" class="form-control" id="tipo">
+                        </div>
+                        <div class="mb-3">
+                            <label for="cantidad" class="form-label">Cantidad</label>
+                            <input type="number" class="form-control" id="cantidad">
+                        </div>
+                        <div class="mb-3">
+                            <label for="codigo" class="form-label">Código</label>
+                            <input type="number" class="form-control" id="codigo">
+                        </div>
+                        <div class="mb-3">
+                            <label for="tamanio" class="form-label">Tamaño</label>
+                            <input type="text" class="form-control" id="tamanio">
+                        </div>
+                        <button class="btn btn-success" onclick="agregarPlancha()">Guardar</button>
+                    </div>
+                `;
+            } else if (tipo === 'actualizarStock') {
+                formularioHTML = `
+                    <div class="card p-4">
+                        <h5>Actualizar Stock</h5>
+                        <div class="mb-3">
+                            <label for="codigo" class="form-label">Código</label>
+                            <input type="number" class="form-control" id="codigo">
+                        </div>
+                        <div class="mb-3">
+                            <label for="cantidad" class="form-label">Cantidad a agregar</label>
+                            <input type="number" class="form-control" id="cantidad">
+                        </div>
+                        <button class="btn btn-warning" onclick="actualizarStock()">Actualizar</button>
+                    </div>
+                `;
+            } else if (tipo === 'quitar') {
+                formularioHTML = `
+                    <div class="card p-4">
+                        <h5>Quitar Stock</h5>
+                        <div class="mb-3">
+                            <label for="codigo" class="form-label">Código</label>
+                            <input type="number" class="form-control" id="codigo">
+                        </div>
+                        <div class="mb-3">
+                            <label for="cantidad" class="form-label">Cantidad a quitar</label>
+                            <input type="number" class="form-control" id="cantidad">
+                        </div>
+                        <button class="btn btn-danger" onclick="quitarStock()">Quitar</button>
+                    </div>
+                `;
+            } else if (tipo === 'editar') {
+                formularioHTML = `
+                    <div class="card p-4">
+                        <h5>Editar Datos de Plancha</h5>
+                        <div class="mb-3">
+                            <label for="codigo" class="form-label">Código</label>
+                            <input type="number" class="form-control" id="codigo">
+                        </div>
+                        <div class="mb-3">
+                            <label for="tipo" class="form-label">Nuevo Tipo</label>
+                            <input type="text" class="form-control" id="tipo">
+                        </div>
+                        <div class="mb-3">
+                            <label for="tamanio" class="form-label">Nuevo Tamaño</label>
+                            <input type="text" class="form-control" id="tamanio">
+                        </div>
+                        <button class="btn btn-info" onclick="editarPlancha()">Editar</button>
+                    </div>
+                `;
+            }
+
+            document.getElementById('formulario').innerHTML = formularioHTML;
+        }
+
+        function agregarPlancha() {
+            const tipo = document.getElementById('tipo').value;
+            const cantidad = document.getElementById('cantidad').value;
+            const codigo = document.getElementById('codigo').value;
+            const tamanio = document.getElementById('tamanio').value;
+
+            $.ajax({
+                url: '/agregar',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ tipo, cantidad, codigo, tamanio }),
+                success: function(response) {
+                    alert(response.message);
+                    cargarInventario();
+                },
+                error: function(xhr) {
+                    alert(xhr.responseJSON.error);
+                }
+            });
+        }
+
+        function actualizarStock() {
+            const codigo = document.getElementById('codigo').value;
+            const cantidad = document.getElementById('cantidad').value;
+
+            $.ajax({
+                url: '/actualizar',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ codigo, cantidad }),
+                success: function(response) {
+                    alert(response.message);
+                    cargarInventario();
+                },
+                error: function(xhr) {
+                    alert(xhr.responseJSON.error);
+                }
+            });
+        }
+
+        function quitarStock() {
+            const codigo = document.getElementById('codigo').value;
+            const cantidad = document.getElementById('cantidad').value;
+
+            $.ajax({
+                url: '/quitar',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ codigo, cantidad }),
+                success: function(response) {
+                    alert(response.message);
+                    cargarInventario();
+                },
+                error: function(xhr) {
+                    alert(xhr.responseJSON.error);
+                }
+            });
+        }
+
+        function editarPlancha() {
+            const codigo = document.getElementById('codigo').value;
+            const tipo = document.getElementById('tipo').value;
+            const tamanio = document.getElementById('tamanio').value;
+
+            $.ajax({
+                url: '/editar',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ codigo, tipo, tamanio }),
+                success: function(response) {
+                    alert(response.message);
+                    cargarInventario();
+                },
+                error: function(xhr) {
+                    alert(xhr.responseJSON.error);
+                }
+            });
+        }
+
+        function cargarInventario() {
+            $.ajax({
+                url: '/inventario',
+                method: 'GET',
+                success: function(data) {
+                    let html = '<h5>Inventario Actual</h5><ul class="list-group">';
+                    data.forEach(item => {
+                        html += `<li class="list-group-item">Tipo: ${item.tipo}, Cantidad: ${item.cantidad}, Código: ${item.codigo}, Tamaño: ${item.tamanio}</li>`;
+                    });
+                    html += '</ul>';
+                    document.getElementById('resultado').innerHTML = html;
+                },
+                error: function() {
+                    alert('Error al cargar el inventario.');
+                }
+            });
+        }
+    </script>
+</body>
+</html>
