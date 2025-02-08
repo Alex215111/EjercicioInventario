@@ -107,7 +107,7 @@ def enviar_alerta_whatsapp(codigo, tipo, mensaje):
         client = Client(account_sid, auth_token)
 
         # Lista de números de WhatsApp registrados en Twilio Sandbox
-        numeros_destino = ["whatsapp:+56968356479", "whatsapp:+56986261363"]  # Agrega más números aquí
+        numeros_destino = ["whatsapp:+56968356479"]  # Agrega más números aquí
 
         for numero in numeros_destino:
             mensaje_whatsapp = client.messages.create(
