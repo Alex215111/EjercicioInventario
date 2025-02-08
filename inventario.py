@@ -73,27 +73,31 @@ def quitar_stock():
 
         with get_db_connection() as conn:
             with conn.cursor() as cursor:
-                cursor.execute('SELECT cantidad FROM planchas WHERE codigo = %s', (codigo,))
+                # Obtener stock actual y tipo de plancha
+                cursor.execute('SELECT cantidad, tipo FROM planchas WHERE codigo = %s', (codigo,))
                 row = cursor.fetchone()
+
                 if not row:
                     return jsonify({"error": "Código no encontrado."}), 404
 
-                stock_actual = row[0]
+                stock_actual, tipo = row
                 if cantidad > stock_actual:
                     return jsonify({"error": "No puede quitar más planchas de las que hay en stock."}), 400
 
+                # Calcular el nuevo stock
                 nuevo_stock = stock_actual - cantidad
                 cursor.execute('UPDATE planchas SET cantidad = %s WHERE codigo = %s', (nuevo_stock, codigo))
                 conn.commit()
 
-                # 🚨 Si el stock llega a 0, enviamos una alerta 🚨
+                # Si el stock es 0, enviar una alerta por WhatsApp
                 if nuevo_stock <= 1:
-                    mensaje = f"El producto con código {codigo} se ha agotado."
-                    enviar_alerta_whatsapp(mensaje)
+                    enviar_alerta_whatsapp(codigo, tipo, "⚠️ ¡El stock de esta plancha se esta agotando!")
 
-        return jsonify({"message": "Stock reducido correctamente."}), 200
+        return jsonify({"message": f"Stock reducido correctamente. Nuevo stock: {nuevo_stock}"}), 200
+
     except (ValueError, KeyError):
         return jsonify({"error": "Datos inválidos."}), 400
+
 
     
 from twilio.rest import Client
