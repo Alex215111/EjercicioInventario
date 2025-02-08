@@ -99,17 +99,25 @@ def quitar_stock():
 def enviar_alerta_whatsapp(mensaje):
     """ Envía una alerta de stock por WhatsApp usando Twilio. """
     try:
-        import os
+        # Obtener credenciales desde las variables de entorno
         account_sid = os.environ.get("TWILIO_ACCOUNT_SID")
         auth_token = os.environ.get("TWILIO_AUTH_TOKEN")
+
+        # Validar que las credenciales existan
+        if not account_sid or not auth_token:
+            print("❌ ERROR: Las credenciales de Twilio no están configuradas.")
+            return
+        
         client = Client(account_sid, auth_token)
 
+        # Enviar mensaje de WhatsApp
         mensaje_whatsapp = client.messages.create(
             body=f"⚠️ Alerta de Stock Agotado\n\n{mensaje}",
             from_="whatsapp:+14155238886",  # Número de Twilio (sandbox)
             to="whatsapp:+56968356479"  # Tu número de WhatsApp
         )
-        print(f"✅ Mensaje enviado a WhatsApp: {mensaje_whatsapp.sid}")
+        print(f"✅ Mensaje enviado a WhatsApp con SID: {mensaje_whatsapp.sid}")
+
     except Exception as e:
         print(f"❌ Error al enviar mensaje de WhatsApp: {e}")
 
