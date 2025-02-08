@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, jsonify
 import os
 import psycopg2
+from twilio.rest import Client  
 
 app = Flask(__name__)
 
@@ -81,11 +82,37 @@ def quitar_stock():
                 if cantidad > stock_actual:
                     return jsonify({"error": "No puede quitar más planchas de las que hay en stock."}), 400
 
-                cursor.execute('UPDATE planchas SET cantidad = cantidad - %s WHERE codigo = %s', (cantidad, codigo))
+                nuevo_stock = stock_actual - cantidad
+                cursor.execute('UPDATE planchas SET cantidad = %s WHERE codigo = %s', (nuevo_stock, codigo))
                 conn.commit()
+
+                # 🚨 Si el stock llega a 0, enviamos una alerta 🚨
+                if nuevo_stock <= 1:
+                    mensaje = f"El producto con código {codigo} se ha agotado."
+                    enviar_alerta_whatsapp(mensaje)
+
         return jsonify({"message": "Stock reducido correctamente."}), 200
     except (ValueError, KeyError):
         return jsonify({"error": "Datos inválidos."}), 400
+
+    
+def enviar_alerta_whatsapp(mensaje):
+    """ Envía una alerta de stock por WhatsApp usando Twilio. """
+    try:
+        import os
+        account_sid = os.environ.get("TWILIO_ACCOUNT_SID")
+        auth_token = os.environ.get("TWILIO_AUTH_TOKEN")
+        client = Client(account_sid, auth_token)
+
+        mensaje_whatsapp = client.messages.create(
+            body=f"⚠️ Alerta de Stock Agotado\n\n{mensaje}",
+            from_="whatsapp:+14155238886",  # Número de Twilio (sandbox)
+            to="whatsapp:+56968356479"  # Tu número de WhatsApp
+        )
+        print(f"✅ Mensaje enviado a WhatsApp: {mensaje_whatsapp.sid}")
+    except Exception as e:
+        print(f"❌ Error al enviar mensaje de WhatsApp: {e}")
+
 
 @app.route('/editar', methods=['POST'])
 def editar_plancha():
